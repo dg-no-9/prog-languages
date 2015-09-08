@@ -17,6 +17,15 @@ extern FILE *yyout;        // output stream
 extern int   yyleng;       // length of current lexeme
 extern char *yytext;       // text of current lexeme
 
+extern const char* keywords[];
+extern const char* operator_keywords[];
+extern const char* datatype_keywords[];
+extern const char punctuations[];
+
+#define keywords_size (sizeof (keywords) / sizeof (const char *))
+#define op_keywords_size (sizeof (operator_keywords) / sizeof (const char *))
+#define datatype_keywords_size (sizeof (datatype_keywords) / sizeof (const char *))
+#define punctuations_size (sizeof(punctuations)/ sizeof (const char))
 // Maximum lexeme length
 #define MAX_LEXEME_LEN 100
 
@@ -25,7 +34,6 @@ extern char *yytext;       // text of current lexeme
 #define TOK_EOF          5000  // end of file
 #define TOK_EOF_SL       5001  // end of file while parsing string literal
 #define TOK_UNKNOWN      6000  // unknown lexeme
-#define TOK_IDENTIFIER   4000  //Identifier
 
 /*Keywords*/
 #define TOK_IF 		1001
@@ -46,14 +54,36 @@ extern char *yytext;       // text of current lexeme
 #define TOK_STRING	1102
 
 /*Punctuations*/
-#define TOK_SEMICOLON 2000
-#define TOK_OPENPAREN   2001
-#define TOK_CLOSEPAREN  2002
-#define TOK_OPENBRACKET 2003
+#define TOK_SEMICOLON       2000
+#define TOK_OPENPAREN       2001
+#define TOK_CLOSEPAREN      2002
+#define TOK_OPENBRACKET     2003
 #define TOK_CLOSEBRACKET    2004
-#define TOK_OPENBRACE   2005
-#define TOK_CLOSEBRACE  2006
-#define TOK_COMMA   2007
+#define TOK_OPENBRACE       2005
+#define TOK_CLOSEBRACE      2006
+#define TOK_COMMA           2007
+
+/*Operators*/
+#define TOK_PLUS        3000
+#define TOK_MINUS       3001
+#define TOK_MULTIPLY    3002
+#define TOK_DIVIDE      3003
+
+#define TOK_ASSIGN      3004
+#define TOK_EQUALTO     3005
+#define TOK_LESSTHAN    3006
+#define TOK_GREATERTHAN 3007
+#define TOK_NOTEQUALTO  3008
+#define TOK_AND         3009
+#define TOK_OR          3010
+#define TOK_NOT         3011
+#define TOK_LENGTH      3012
+
+/*Literals*/
+#define TOK_IDENTIFIER      4000    //Identifiers
+#define TOK_INTLIT          4001    //Integer Literals
+#define TOK_FLOATLIT        4002    //Floating Point Literals
+#define TOK_STRINGLIT       4003    //String Literals
 
 #endif
 

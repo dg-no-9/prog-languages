@@ -19,10 +19,10 @@ int main( int argc, char* argv[] )
   // Set the input and output streams
   yyin = stdin;
   yyout = stdout;
- 
+
   // Do the lexical parsing
   token = yylex();
-  while( token != TOK_EOF ) 
+  while( token != TOK_EOF )
   //while(0)
   {
     // What did we find?

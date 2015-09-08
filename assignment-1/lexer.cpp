@@ -10,9 +10,16 @@
 
 int is_keyword(char*);
 int is_punctuation(char);
+int is_uoperator(char);
 //*****************************************************************************
 // Do the lexical parsing
 char lexeme[MAX_LEXEME_LEN];  // Character buffer for lexeme
+
+const char* keywords[] = {"if","else", "for","while","print","return","continue","break","debug","read","let"}; //language keywords, Token Id starts from 1001
+const char* operator_keywords[] = {"and","or","not","length"}; //operator keywords, Token Id starts from 3009
+const char* datatype_keywords[] = {"int","float","string"}; //data type keywords, Token Id starts from 3009
+const char punctuations[] = {';','(',')','[',']','{','}',','};
+
 int yylex()
 {
   static char c = -1;         // Have we read the first character yet?
@@ -28,146 +35,216 @@ int yylex()
   // If the very first character has not yet been read, read it
   if( c < 0 )
     c = fgetc( yyin );
-
   // Test for end of file
-  if( feof(yyin) ) {
+  if( feof(yyin) )
+  {
     // Ready for next time
     c = -1;
     // Done!
     return( TOK_EOF );
   }
 
-  if(isalpha(c))
+  if (isspace(c) != 0)      //If whitespace is encountered, eat the character, and move pointer to next character.
+  {
+    c = fgetc(yyin);
+  }
+
+  if(isalpha(c))            //Check for indentifiers and keywords, enter if character encountered is alphabet.
   {
   	// Store current character and read the next
   	lexeme[yyleng++] = c;
   	c = fgetc( yyin );
         while(isalpha(c) || isdigit(c) || c == '_') // If character is alphabet or digit or underscore, add and get next, else endof while loop, return Identifier Token.
         {
-		lexeme[yyleng++]=c;
+            lexeme[yyleng++]=c;
     		c = fgetc( yyin );
         }
-        if((token_id = is_keyword(lexeme)) != 0)
+        if((token_id = is_keyword(lexeme)) != 0) //If lexeme is keyword, return respective token id, else return as identifier.
         {
        		return token_id;
         }
         else
-	{
+        {
             return TOK_IDENTIFIER;
         }
   }
-  else if ((token_id=is_punctuation(c)) != 0)
+
+  if(isdigit(c))        //Check for integer and floating point integers, enter if character encountered is digit.
+  {
+    // Store current character and read the next
+  	lexeme[yyleng++] = c;
+  	c = fgetc( yyin );
+        while(isdigit(c)) // If character is digit, add and get next character, else endof while loop, return integer literal Token.
+        {
+            lexeme[yyleng++]=c;
+    		c = fgetc( yyin );
+        }
+        if(c != '.')
+            return TOK_INTLIT;
+        else
+        {
+            lexeme[yyleng++] = c;
+            c = fgetc( yyin );
+            while(isdigit(c))
+            {
+                lexeme[yyleng++] = c;
+                c = fgetc( yyin );
+            }
+            return TOK_FLOATLIT;
+        }
+
+  }
+
+  if(c == '"')
+  {
+    lexeme[yyleng++] = c;
+    c = fgetc( yyin );
+    while(c != '"' && yyleng < MAX_LEXEME_LEN - 1) //Add up all characters to lexeme till ending quote is encountered or maxmum lexeme length limit is reached.
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc ( yyin );
+    }
+    lexeme[yyleng++] = c;
+    c = fgetc( yyin );
+    return TOK_STRINGLIT;
+  }
+
+  if ((token_id=is_punctuation(c)) != 0) //Check for punctuation tokens.
   {
     lexeme[yyleng++] = c;
     c = fgetc( yyin );
     return token_id;
   }
-  else
+
+  if ((token_id=is_uoperator(c)) != 0) //Check for mathematical operators
   {
-      	//lexeme[yyleng++] = c;
-  	c = fgetc ( yyin );
-	//return( TOK_UNKNOWN );
+    lexeme[yyleng++] = c;
+    c = fgetc(yyin);
+    return token_id;
   }
-  // We don't yet know how to recognize any lexemes
+
+  if (c == ':') //Check for assignment operator
+  {
+    lexeme[yyleng++] = c;
+    c = fgetc(yyin);
+    if(c == '=')
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc(yyin);
+        return TOK_ASSIGN;
+    }
+    return TOK_UNKNOWN;
+  }
+
+  if (c == '=') //Check for equalsto operator
+  {
+    lexeme[yyleng++] = c;
+    c = fgetc(yyin);
+    if(c == '=')
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc(yyin);
+        return TOK_EQUALTO;
+    }
+    return TOK_UNKNOWN;
+  }
+
+  if (c == '<') //Check for check for less than and not equals operator
+  {
+    lexeme[yyleng++] = c;
+    c = fgetc(yyin);
+    if(c == '>')
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc(yyin);
+        return TOK_NOTEQUALTO;
+    }
+    else return TOK_LESSTHAN;
+  }
+
+  if(c == '>') //Check for greater than operator.
+  {
+    lexeme[yyleng++] = c;
+    c = fgetc(yyin);
+    return TOK_GREATERTHAN;
+  }
+
+    //Token is not recognized by lexer, continue reading next character token.
+
+    lexeme[yyleng++] = c;
+    c = fgetc ( yyin );
+    return( TOK_UNKNOWN );
+
+}
+
+int is_keyword(char* current_token)
+{
+    int i;
+    /*Check for basic language keywords*/
+    for(i =0; i < keywords_size; i++)
+    {
+        if (strcmp(current_token, keywords[i]) == 0)
+        {
+            return 1001 + i;    //Keyword Token ID starts from 1001.
+        }
+    }
+
+    /*Check for operator keywords*/
+    for (i = 0; i < op_keywords_size; i++)
+    {
+        if (strcmp(current_token, operator_keywords[i]) == 0)
+        {
+            return 3009 + i;       //Operator keywords token id starts from 3009
+        }
+    }
+
+    /*Check for datatype keywords*/
+    for (i = 0; i < datatype_keywords_size; i++)
+    {
+        if (strcmp(current_token, datatype_keywords[i]) == 0)
+        {
+            return 1100 + i;       //Datatype keywords token id starts from 1100
+        }
+    }
+}
+
+int is_uoperator(char current_token)
+{
+   int token_id = 0;
+    switch(current_token)
+    {
+        case '+':
+            token_id = TOK_PLUS;
+            break;
+
+        case '-':
+            token_id = TOK_MINUS;
+            break;
+
+        case '*':
+            token_id = TOK_MULTIPLY;
+            break;
+
+        case '/':
+            token_id = TOK_DIVIDE;
+            break;
+
+        default:
+            break;
+    }
+    return token_id;
+
 }
 
 int is_punctuation(char current_token)
 {
-    if (current_token== ';')
+    int i;
+    for (i = 0; i < punctuations_size; i++)
     {
-        return TOK_SEMICOLON;
-    }
-    if (current_token== '(')
-    {
-        return TOK_OPENPAREN;
-    }
-    if (current_token== ')')
-    {
-        return TOK_CLOSEPAREN;
-    }
-    if (current_token== '[')
-    {
-        return TOK_OPENBRACKET;
-    }
-    if (current_token== ']')
-    {
-        return TOK_CLOSEBRACKET;
-    }
-    if (current_token== '{')
-    {
-        return TOK_OPENBRACE;
-    }
-    if (current_token== '}')
-    {
-        return TOK_CLOSEBRACE;
+        if (current_token == punctuations[i])
+        {
+            return 2000 + i;
+        }
     }
 
-    return 0;
-
-}
-int is_keyword(char* current_token)
-{
-   if (strcmp(current_token, "if")==0)
-   {
-      return TOK_IF;
-   }
-   else if(strcmp(current_token, "else")==0)
-   {
-     return TOK_ELSE;
-   }
-   else if(strcmp(current_token, "for")==0)
-   {
-     return TOK_FOR;
-   }
-
-   else if(strcmp(current_token, "while")==0)
-   {
-     return TOK_WHILE;
-   }
-
-   else if(strcmp(current_token, "print")==0)
-   {
-     return TOK_PRINT;
-   }
-
-   else if(strcmp(current_token, "return")==0)
-   {
-     return TOK_RETURN;
-   }
-
-   else if(strcmp(current_token, "continue")==0)
-   {
-     return TOK_CONTINUE;
-   }
-
-   else if(strcmp(current_token, "break")==0)
-   {
-     return TOK_BREAK;
-   }
-
-   else if(strcmp(current_token, "debug")==0)
-   {
-     return TOK_DEBUG;
-   }
-   else if(strcmp(current_token, "read")==0)
-   {
-     return TOK_READ;
-   }
-
-   else if(strcmp(current_token, "int")==0)
-   {
-     return TOK_INT;
-   }
-
-   else if(strcmp(current_token, "float")==0)
-   {
-     return TOK_FLOAT;
-   }
-
-   else if(strcmp(current_token, "string")==0)
-   {
-     return TOK_STRING;
-   }
-
-   return 0;
 }
