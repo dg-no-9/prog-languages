@@ -1,8 +1,9 @@
-//*****************************************************************************
-// purpose: CSE 4713 / 6713 Assignment 1: Lexical Analyzer
-// created: 8-25-2015
-//  author: J. Edward Swan II
-//*****************************************************************************
+/*** purpose: CSE 4713 / 6713 Assignment 1: Lexical Analyzer
+created: 8-25-2015
+Template Author: J. Edward Swan II
+Assignment by: Deepak Gautam
+*****************************************************************************
+*/
 #include "lexer.h"
 #include <ctype.h>
 #include <assert.h>
@@ -11,49 +12,49 @@
 int is_keyword(char*);
 int is_punctuation(char);
 int is_uoperator(char);
-//*****************************************************************************
-// Do the lexical parsing
+
+
 char lexeme[MAX_LEXEME_LEN];  // Character buffer for lexeme
 
 const char* keywords[] = {"if","else", "for","while","print","return","continue","break","debug","read","let"}; //language keywords, Token Id starts from 1001
 const char* operator_keywords[] = {"and","or","not","length"}; //operator keywords, Token Id starts from 3009
 const char* datatype_keywords[] = {"int","float","string"}; //data type keywords, Token Id starts from 3009
-const char punctuations[] = {';','(',')','[',']','{','}',','};
+const char punctuations[] = {';','(',')','[',']','{','}',','}; //Punctuation characters
 
 int yylex()
 {
-  static char c = -1;         // Have we read the first character yet?
-  int char_type;              // Hold the character type
-  int token_id=0;
-  //yyleng = 0
-  // Prepare the buffer to hold the lexeme
-  for( int i = 0; i < MAX_LEXEME_LEN; i++ )
+    static char c = -1;         // Have we read the first character yet?
+    int char_type;             // Hold the character type
+    int token_id=0;
+
+    // Prepare the buffer to hold the lexeme
+    for( int i = 0; i < MAX_LEXEME_LEN; i++ )
     lexeme[i] = '\0';
-  yytext = lexeme;
-  yyleng = 0;
+    yytext = lexeme;
+    yyleng = 0;
 
-  // If the very first character has not yet been read, read it
-  if( c < 0 )
-    c = fgetc( yyin );
-  // Test for end of file
-  if( feof(yyin) )
-  {
-    // Ready for next time
-    c = -1;
-    // Done!
-    return( TOK_EOF );
-  }
+    // If the very first character has not yet been read, read it
+    if( c < 0 )
+        c = fgetc( yyin );
 
-  if (isspace(c) != 0)      //If whitespace is encountered, eat the character, and move pointer to next character.
-  {
-    c = fgetc(yyin);
-  }
+    if (isspace(c) != 0)      //If whitespace is encountered, eat the character, and move pointer to next character.
+    {
+        c = fgetc(yyin);
+    }
+    // Test for end of file
+    if( feof(yyin) )
+    {
+        // Ready for next time
+        c = -1;
+        // Done!
+        return( TOK_EOF );
+    }
 
-  if(isalpha(c))            //Check for indentifiers and keywords, enter if character encountered is alphabet.
-  {
-  	// Store current character and read the next
-  	lexeme[yyleng++] = c;
-  	c = fgetc( yyin );
+    if(isalpha(c))            //Check for indentifiers and keywords, enter if character encountered is alphabet.
+    {
+        // Store current character and read the next
+        lexeme[yyleng++] = c;
+        c = fgetc( yyin );
         while(isalpha(c) || isdigit(c) || c == '_') // If character is alphabet or digit or underscore, add and get next, else endof while loop, return Identifier Token.
         {
             lexeme[yyleng++]=c;
@@ -67,13 +68,13 @@ int yylex()
         {
             return TOK_IDENTIFIER;
         }
-  }
+    }
 
-  if(isdigit(c))        //Check for integer and floating point integers, enter if character encountered is digit.
-  {
-    // Store current character and read the next
-  	lexeme[yyleng++] = c;
-  	c = fgetc( yyin );
+    if(isdigit(c))        //Check for integer and floating point integers, enter if character encountered is digit.
+    {
+        // Store current character and read the next
+        lexeme[yyleng++] = c;
+        c = fgetc( yyin );
         while(isdigit(c)) // If character is digit, add and get next character, else endof while loop, return integer literal Token.
         {
             lexeme[yyleng++]=c;
@@ -93,86 +94,84 @@ int yylex()
             return TOK_FLOATLIT;
         }
 
-  }
+    }
 
-  if(c == '"')
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc( yyin );
-    while(c != '"' && yyleng < MAX_LEXEME_LEN - 1) //Add up all characters to lexeme till ending quote is encountered or maxmum lexeme length limit is reached.
+    if(c == '"')
     {
         lexeme[yyleng++] = c;
-        c = fgetc ( yyin );
+        c = fgetc( yyin );
+        while(c != '"' && yyleng < MAX_LEXEME_LEN - 1) //Add up all characters to lexeme till ending quote is encountered or maxmum lexeme length limit is reached.
+        {
+            lexeme[yyleng++] = c;
+            c = fgetc ( yyin );
+        }
+        lexeme[yyleng++] = c;
+        c = fgetc( yyin );
+        return TOK_STRINGLIT;
     }
-    lexeme[yyleng++] = c;
-    c = fgetc( yyin );
-    return TOK_STRINGLIT;
-  }
 
-  if ((token_id=is_punctuation(c)) != 0) //Check for punctuation tokens.
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc( yyin );
-    return token_id;
-  }
+    if ((token_id=is_punctuation(c)) != 0) //Check for punctuation tokens.
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc( yyin );
+        return token_id;
+    }
 
-  if ((token_id=is_uoperator(c)) != 0) //Check for mathematical operators
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc(yyin);
-    return token_id;
-  }
-
-  if (c == ':') //Check for assignment operator
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc(yyin);
-    if(c == '=')
+    if ((token_id=is_uoperator(c)) != 0) //Check for mathematical operators
     {
         lexeme[yyleng++] = c;
         c = fgetc(yyin);
-        return TOK_ASSIGN;
+        return token_id;
     }
-    return TOK_UNKNOWN;
-  }
 
-  if (c == '=') //Check for equalsto operator
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc(yyin);
-    if(c == '=')
+    if (c == ':') //Check for assignment operator
     {
         lexeme[yyleng++] = c;
         c = fgetc(yyin);
-        return TOK_EQUALTO;
+        if(c == '=')
+        {
+            lexeme[yyleng++] = c;
+            c = fgetc(yyin);
+            return TOK_ASSIGN;
+        }
+        return TOK_UNKNOWN;
     }
-    return TOK_UNKNOWN;
-  }
 
-  if (c == '<') //Check for check for less than and not equals operator
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc(yyin);
-    if(c == '>')
+    if (c == '=') //Check for equalsto operator
     {
         lexeme[yyleng++] = c;
         c = fgetc(yyin);
-        return TOK_NOTEQUALTO;
+        if(c == '=')
+        {
+            lexeme[yyleng++] = c;
+            c = fgetc(yyin);
+            return TOK_EQUALTO;
+        }
+        return TOK_UNKNOWN;
     }
-    else return TOK_LESSTHAN;
-  }
 
-  if(c == '>') //Check for greater than operator.
-  {
-    lexeme[yyleng++] = c;
-    c = fgetc(yyin);
-    return TOK_GREATERTHAN;
-  }
+    if (c == '<') //Check for check for less than and not equals operator
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc(yyin);
+        if(c == '>')
+        {
+            lexeme[yyleng++] = c;
+            c = fgetc(yyin);
+            return TOK_NOTEQUALTO;
+        }
+        else return TOK_LESSTHAN;
+    }
 
-    //Token is not recognized by lexer, continue reading next character token.
+    if(c == '>') //Check for greater than operator.
+    {
+        lexeme[yyleng++] = c;
+        c = fgetc(yyin);
+        return TOK_GREATERTHAN;
+    }
 
-    lexeme[yyleng++] = c;
-    c = fgetc ( yyin );
+    //Token is not recognized by lexer, return current token as unknown token.
+
     return( TOK_UNKNOWN );
 
 }
@@ -210,7 +209,7 @@ int is_keyword(char* current_token)
 
 int is_uoperator(char current_token)
 {
-   int token_id = 0;
+    int token_id = 0;
     switch(current_token)
     {
         case '+':

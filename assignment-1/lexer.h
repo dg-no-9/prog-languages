@@ -1,13 +1,12 @@
-//*****************************************************************************
-// purpose: CSE 4713 / 6713 Assignment 1: Lexical Analyzer
-// created: 8-25-2015
-//  author: J. Edward Swan II
-//*****************************************************************************
-
+/*** purpose: CSE 4713 / 6713 Assignment 1: Lexical Analyzer
+created: 8-25-2015
+Template Author: J. Edward Swan II
+Assignment by: Deepak Gautam
+*****************************************************************************
+*/
 #ifndef LEXER_H
 #define LEXER_H
 
-// Include standard IO streams
 #include <stdio.h>
 
 // The lexical analyzer global variables and functions
