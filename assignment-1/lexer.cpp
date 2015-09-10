@@ -49,7 +49,6 @@ int yylex()
         // Done!
         return( TOK_EOF );
     }
-
     if(isalpha(c))            //Check for indentifiers and keywords, enter if character encountered is alphabet.
     {
         // Store current character and read the next
@@ -171,7 +170,8 @@ int yylex()
     }
 
     //Token is not recognized by lexer, return current token as unknown token.
-
+    lexeme[yyleng++] = c;
+    c = fgetc( yyin );
     return( TOK_UNKNOWN );
 
 }
@@ -205,6 +205,8 @@ int is_keyword(char* current_token)
             return 1100 + i;       //Datatype keywords token id starts from 1100
         }
     }
+
+    return 0;
 }
 
 int is_uoperator(char current_token)
@@ -245,5 +247,6 @@ int is_punctuation(char current_token)
             return 2000 + i;
         }
     }
+    return 0;
 
 }
