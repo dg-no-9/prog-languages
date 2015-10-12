@@ -1,7 +1,8 @@
 /*****************************************************************************
-// purpose: CSE 4713 / 6713 Assignment 2 example flex file
-// created: 9-22-2015
-//  author: J. Edward Swan II
+// purpose: CSE 4713 / 6713 Assignment 2 lexeical parser using flex
+// created at: 10-11-2015
+//  Assignment By:Deepak Gautam
+//  Net ID: dg1308
 *****************************************************************************/
 %option noyywrap
 %{
@@ -55,11 +56,11 @@ or		{return	TOK_OR;}
 not		{return TOK_NOT;}
 length		{return TOK_LENGTH;}
 
-{LETTER}({LETTER}|{DIGIT})* 	{return TOK_IDENTIFIER;}
-({DIGIT})*			{return TOK_INTLIT;}
-({DIGIT})*"."(({DIGIT})*)?	{return TOK_FLOATLIT;}
+{LETTER}({LETTER}|{DIGIT}|_)* 	{return TOK_IDENTIFIER;}	/*Identifier can only start with letter but can have any number of digits or underscores afterward*/
+({DIGIT})*			{return TOK_INTLIT;}		/*Integer Literal can have any number of digits*/
+({DIGIT})*"."(({DIGIT})+)	{return TOK_FLOATLIT;}		/*Float Literal can have zero or more number of digits befor dot(.) and can have at least one or more digit after dot (.)*/
 {STRING_LITERAL} 		{return TOK_STRINGLIT;}
 {EOF_SL}			{return TOK_EOF_SL;}
 .				{return TOK_UNKNOWN;}
 
-<<EOF>> { return TOK_EOF; }
+<<EOF>> { return TOK_EOF;}
