@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <map>
 
@@ -57,6 +56,7 @@ bool IsFirstOfG( void );
 bool IsFirstOfO( void );
 bool IsFirstOfC( void );
 bool IsFirstOfW( void );
+
 // Function to help print the tree nesting
 string psp( int );
 
@@ -106,7 +106,8 @@ int main( int argc, char* argv[] )
 
   // Print out the symbol table
   SymbolTableT::iterator it;
-  for( it = SymbolTable.begin(); it != SymbolTable.end(); ++it ) {
+  for( it = SymbolTable.begin(); it != SymbolTable.end(); ++it ) 
+  {
     cout << "symbol = " << it->first << ", value = " << it->second << endl;
   }
 
@@ -114,7 +115,7 @@ int main( int argc, char* argv[] )
 }
 
 //*****************************************************************************
-// P --> { A \{ A \} }
+// P --> { S }
 void P( void )
 {
   static int Pcnt = 0; // Count the number of P's
@@ -152,15 +153,11 @@ void P( void )
 
 void S( void )
 {
-	static int Scnt = 0;
+	static int Scnt = 0; //Count the number of S's
 	int CurScnt = Scnt++;
-	char const *Serr = "Invalid Statement, should contain any of let, read, print, if or while";
+	char const *Serr = "invalid statement, should contain any of let, read, print, if or while";
 	
 	cout << psp ( CurScnt ) << "enter S " << CurScnt << endl;
-
-	//We know the first token is any of let, read, print, if or while
-	//cout << "-->found " << yytext << endl;
-	//iTok = yylex();
 
 	if ( IsFirstOfA() ) 
 		A();
@@ -174,10 +171,6 @@ void S( void )
 		W();
 	else
 		throw Serr;
-
-	
-	//Read the next token
-	//iTok = yylex();
 
 	cout << psp ( CurScnt ) << "exit S " << CurScnt << endl;
 
@@ -243,8 +236,8 @@ void A( void )
 // E --> B { ( and | or ) B }
 float E( void )
 {
-  float rValue1 = false;   // The value to return
-  float rValue2 = false;
+  float rValue1 = 0;   // The value to return
+  float rValue2 = 0;   // The value of right hand side expression.
   static int Ecnt = 0; // Count the number of E's
   int CurEcnt = Ecnt++;
   char const *Berr = 
@@ -252,7 +245,7 @@ float E( void )
 
   cout << psp( CurEcnt ) << "enter E " << CurEcnt << endl;
 
-  // We next expect to see a T
+  // We next expect to see a B
   if( IsFirstOfB() )
     rValue1 = B();
   else
@@ -262,14 +255,16 @@ float E( void )
   while( iTok == TOK_AND || iTok == TOK_OR )
   {
     cout << "-->found " << yytext << endl;
-    int iTokLast = iTok;
-    iTok = yylex();
+    int iTokLast = iTok; //Track last token type, whether to perform 'and' operation or 'or' one.
+    //Read Next Token
+	iTok = yylex();
+	//We expect B next.
     if( IsFirstOfB() )
       rValue2 = B();
     else
       throw Berr;
 
-    // Perform the logical operation to update rValue1 acording to rValue2
+    // Perform the logical operation to update rValue1 according to last token type.
     switch( iTokLast )
     {
     case TOK_AND:
@@ -294,8 +289,8 @@ float E( void )
 // B --> R [ ( < | > | == ) R ] 
 float B ( void )
 {
-	float rValue1 = false;
-	float rValue2 = false;
+	float rValue1 = 0; //Value to return
+	float rValue2 = 0; //Value for right hand side expression
 	static int Bcnt = 0;
 	int CurBcnt = Bcnt++;
 	char const *Rerr = "Boolean expression does not start with 'not', '-', '(', identifier or floating point literal";
@@ -308,11 +303,14 @@ float B ( void )
 	else
 		throw Rerr;
 	
+	//Check for optional logical operators with R.
 	if ( iTok == TOK_LESSTHAN || iTok == TOK_GREATERTHAN || iTok == TOK_EQUALTO )
 	{
 		cout << "--> found " << yytext << endl;
-		int iTokLast = iTok;
-		iTok = yylex();
+		int iTokLast = iTok; // Track last token for logical operation later.
+		iTok = yylex(); //Read next token
+		
+		//We expect R next
 		if ( IsFirstOfR() )
 			rValue2 = R();
 		else
@@ -346,7 +344,7 @@ float B ( void )
 float R( void )
 {
   float rValue1 = 0;   // The value to return
-  float rValue2;
+  float rValue2 = 0;   // The value for right hand side
   static int Rcnt = 0; // Count the number of T's
   int CurRcnt = Rcnt++;
   char const *Terr = "Term does not start with 'not', '-', '(',identifier or floating point literal";
@@ -363,8 +361,9 @@ float R( void )
   while( iTok == TOK_PLUS || iTok == TOK_MINUS )
   {
     cout << "-->found " << yytext << endl;
-    int iTokLast = iTok;
-    iTok = yylex();
+    int iTokLast = iTok; //Track last token type.
+    iTok = yylex();//Read next token
+	//We expect T next as R contains T after '+' or '-'.
     if( IsFirstOfT() )
       rValue2 = T();
     else
@@ -395,7 +394,7 @@ float T ( void )
 	float rValue2 = 0;
 	static int Tcnt = 0; // Count the number of T's
 	int CurTcnt = Tcnt++;
-	char const *Ferr = "Term does not start with 'not', '-', '(',identifier or floating point literal";
+	char const *Ferr = "factor does not start with 'not', '-', '(',identifier or floating point literal";
 	cout << psp( CurTcnt ) << "enter T " << CurTcnt << endl;
 	 
 	// We next expect to see a T
@@ -438,22 +437,22 @@ float F( void )
 	float rValue1 = 0;
 	static int Fcnt = 0;
 	int CurFcnt = Fcnt++;
-	char const *Ferr = "Factor does not start with 'not or '-', '(', identifier or floating point literal";
+	char const *Ferr = "missing '(', identifier or floating point literal at the begining";
 
 	cout << psp ( CurFcnt ) << "enter F " << CurFcnt << endl;
 	
-	int iTokLast = -1;
+	int iTokLast = -999; //Initialize with random value less than 0,
 	if ( iTok == TOK_NOT || iTok == TOK_MINUS )
 	{	
 		cout << "-->found" << yytext << endl;
 		int iTokLast = iTok;
 		iTok = yylex();
 	}
-
+	//We expect U next as, F contains U after optional '+' or '-'
 	if ( IsFirstOfU())
 	{
 		rValue1 = U();
-		if ( iTokLast != -1 )
+		if ( iTokLast != -999 ) //If last token was '+' or '-', iTokLast must have other value than -999.
 		{
 			rValue1 = rValue1 * (-1);
 		}
@@ -477,7 +476,6 @@ float U( void )
   int CurUcnt = Ucnt++;
 
   cout << psp( CurUcnt ) << "enter U " << CurUcnt << endl;
-
   // Determine what token we have
   switch( iTok )
   {
@@ -511,7 +509,8 @@ float U( void )
     cout << "-->found (" << endl;
     iTok = yylex();
     rValue = E();
-    if( iTok == TOK_CLOSEPAREN ) {
+    if( iTok == TOK_CLOSEPAREN ) 
+	{
       cout << "-->found )" << endl;
       iTok = yylex();
     }
@@ -521,9 +520,8 @@ float U( void )
 
   default:
     // If we made it to here, syntax error
-    throw "factor does not start with 'ID', 'FLOATLIT' or '('";
+    throw "expression does not start with identifier, float literal or '('";
   }
-
   cout << psp( CurUcnt ) << "exit U " << CurUcnt << endl;
 
   return rValue;
@@ -595,7 +593,7 @@ void O( void )
 	{
 		cout << "-->found string " << yytext << endl;
 		//Read Next Token
-		iTok == yylex();
+		iTok = yylex();
 
 	}
 	
@@ -608,7 +606,7 @@ void O( void )
 		SymbolTableT::iterator it = SymbolTable.find( IDname );
 		if ( it == SymbolTable.end() )
 		{
-			throw "Identifier can not be printed before it is initialized";
+			throw "identifier can not be printed before it is initialized";
 		}
 		iTok = yylex();
 	}
@@ -619,7 +617,7 @@ void O( void )
 		iTok = yylex();
 	}
 	else
-		throw "missing semicolon at the end of read statement";
+		throw "missing semicolon at the end of print statement";
 	cout << psp( CurOcnt ) << "exit O " << CurOcnt << endl;
 }
 
@@ -636,29 +634,30 @@ void C ( void )
 	if ( iTok == TOK_OPENPAREN ) 
 	{
 		cout << "-->found " << yytext << endl;
+		iTok = yylex();
 		//We expect Expression next.
 		if ( IsFirstOfE() )
 			E();
 		else
-			throw "Invalid Expression within condition of if statement";
+			throw "invalid Expression within condition of if statement";
 	}
 	else
-		throw "Missing ( after if keyword";
+		throw "missing ( after if keyword";
 
 	if ( iTok == TOK_CLOSEPAREN )
 	{
 		//We expect new program after if statement.
 		//Read next token
-		iTok == yylex();
+		iTok = yylex();
 		if( IsFirstOfP() )
 		{
 			P();
 		}
 		else
-			throw "Missing { after if statement";
+			throw "missing { after if statement";
 	}
 	else
-		throw "Missing ) after if statement";
+		throw "missing ) after if statement";
 
 	if ( iTok == TOK_ELSE )
 	{
@@ -668,7 +667,7 @@ void C ( void )
 		if (IsFirstOfP() )
 			P();
 		else
-			throw "Missing { ater else statement";
+			throw "missing { ater else statement";
 	}
 
 	cout << psp ( CurCcnt ) << " exit C " << CurCcnt << endl;
@@ -692,25 +691,25 @@ void W ( void )
 		if ( IsFirstOfE() )
 			E();
 		else
-			throw "Invalid Expression within condition of while statement";
+			throw "invalid Expression within condition of while statement";
 	}
 	else
-		throw "Missing ( after while";
+		throw "missing ( after while";
 
 	if ( iTok == TOK_CLOSEPAREN )
 	{
 		//We expect new program after if statement.
 		//Read next token
-		iTok == yylex();
+		iTok = yylex();
 		if( IsFirstOfP() )
 		{
 			P();
 		}
 		else
-			throw "Missing { after while statement";
+			throw "missing { after while statement";
 	}
 	else
-		throw "Missing ) after while statement";
+		throw "missing ) after while statement";
 
 	cout << psp ( CurWcnt ) << " exit W " << CurWcnt << endl;
 
